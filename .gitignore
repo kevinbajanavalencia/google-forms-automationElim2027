@@ -3,6 +3,7 @@
 
 # Private Apps Script configuration
 src/private-config.gs
+src/private-main.gs
 
 # Environment / secrets
 .env

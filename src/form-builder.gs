@@ -10,14 +10,20 @@ function buildForm(config, language) {
   }
 
   config.sections.forEach((section, sectionIndex) => {
+    let sectionItem;
+
     if (sectionIndex === 0) {
-      form
+      sectionItem = form
         .addSectionHeaderItem()
         .setTitle(section.title[language]);
     } else {
-      form
+      sectionItem = form
         .addPageBreakItem()
         .setTitle(section.title[language]);
+    }
+
+    if (section.description && section.description[language]) {
+      sectionItem.setHelpText(section.description[language]);
     }
 
     section.questions.forEach((question) => {
