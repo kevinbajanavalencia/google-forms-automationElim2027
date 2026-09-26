@@ -2,41 +2,145 @@ function calculateAgeAtDate(
   birthDate,
   referenceDate
 ) {
-  if (
-    !(birthDate instanceof Date) ||
-    isNaN(birthDate.getTime())
-  ) {
-    throw new Error("Invalid birth date.");
-  }
+  const parsedBirthDate =
+    parseDateResponse_(birthDate);
 
-  if (
-    !(referenceDate instanceof Date) ||
-    isNaN(referenceDate.getTime())
-  ) {
-    throw new Error("Invalid reference date.");
-  }
+  const parsedReferenceDate =
+    parseDateResponse_(referenceDate);
 
   let age =
-    referenceDate.getFullYear() -
-    birthDate.getFullYear();
+    parsedReferenceDate.getFullYear() -
+    parsedBirthDate.getFullYear();
 
   const monthDifference =
-    referenceDate.getMonth() -
-    birthDate.getMonth();
+    parsedReferenceDate.getMonth() -
+    parsedBirthDate.getMonth();
 
   const birthdayHasNotOccurred =
     monthDifference < 0 ||
     (
       monthDifference === 0 &&
-      referenceDate.getDate() <
-        birthDate.getDate()
+      parsedReferenceDate.getDate() <
+        parsedBirthDate.getDate()
     );
 
   if (birthdayHasNotOccurred) {
     age--;
   }
 
+  if (age < 0) {
+    throw new Error(
+      "Birth date cannot be after the registration date."
+    );
+  }
+
   return age;
+}
+
+
+function parseDateResponse_(value) {
+  if (
+    value instanceof Date &&
+    !isNaN(value.getTime())
+  ) {
+    return new Date(
+      value.getFullYear(),
+      value.getMonth(),
+      value.getDate()
+    );
+  }
+
+  if (typeof value !== "string") {
+    throw new Error(
+      `Invalid date value: ${value}`
+    );
+  }
+
+  const normalizedValue =
+    value.trim();
+
+  if (!normalizedValue) {
+    throw new Error(
+      "Date value is empty."
+    );
+  }
+
+  let match =
+    normalizedValue.match(
+      /^(\d{4})-(\d{1,2})-(\d{1,2})$/
+    );
+
+  if (match) {
+    return createValidatedDate_(
+      Number(match[1]),
+      Number(match[2]),
+      Number(match[3])
+    );
+  }
+
+  match =
+    normalizedValue.match(
+      /^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/
+    );
+
+  if (match) {
+    const firstPart =
+      Number(match[1]);
+
+    const secondPart =
+      Number(match[2]);
+
+    const year =
+      Number(match[3]);
+
+    if (
+      secondPart > 12 &&
+      firstPart <= 12
+    ) {
+      return createValidatedDate_(
+        year,
+        firstPart,
+        secondPart
+      );
+    }
+
+    return createValidatedDate_(
+      year,
+      secondPart,
+      firstPart
+    );
+  }
+
+  throw new Error(
+    `Unsupported date format: ${normalizedValue}`
+  );
+}
+
+
+function createValidatedDate_(
+  year,
+  month,
+  day
+) {
+  const date =
+    new Date(
+      year,
+      month - 1,
+      day
+    );
+
+  const isValid =
+    date.getFullYear() === year &&
+    date.getMonth() === month - 1 &&
+    date.getDate() === day;
+
+  if (!isValid) {
+    throw new Error(
+      `Invalid date: ${year}-${month}-${day}`
+    );
+  }
+
+  return date;
 }
 
 
