@@ -1,7 +1,24 @@
-function testBuildSpanishForm() {
-  buildForm(FORM_CONFIG, "es");
+function generateExampleSpanishForm() {
+  generateExampleFormWithSpreadsheet_("es");
 }
 
-function testBuildFrenchForm() {
-  buildForm(FORM_CONFIG, "fr");
+
+function generateExampleFrenchForm() {
+  generateExampleFormWithSpreadsheet_("fr");
+}
+
+
+function generateExampleFormWithSpreadsheet_(language) {
+  const form = buildForm(FORM_CONFIG, language);
+
+  const spreadsheet = createResponseSpreadsheet(
+    `${FORM_CONFIG.title[language]} - Responses`
+  );
+
+  connectFormToSpreadsheet(form, spreadsheet);
+
+  return {
+    form: form,
+    spreadsheet: spreadsheet
+  };
 }

@@ -2,11 +2,11 @@
 
 ## 1. Overview
 
-This project separates source code, public technical documentation and private deployment-specific configuration.
+This project separates reusable public source code from private deployment-specific configuration.
 
-The public repository contains only reusable implementation details and fictional examples.
+The public repository contains only technical implementation details and fictional examples.
 
-Operational event information and real user data are intentionally kept outside the repository.
+Operational information, real form content and user data are intentionally kept outside the repository.
 
 ## 2. High-level architecture
 
@@ -36,9 +36,9 @@ Operational event information and real user data are intentionally kept outside 
 
 ## 3. Git and GitHub
 
-Git is used for source-code version control.
+Git manages the source-code history.
 
-GitHub stores the public repository and its history.
+GitHub stores the public repository.
 
 Typical workflow:
 
@@ -65,22 +65,24 @@ GitHub does not execute the Google Apps Script project.
 
 ## 4. clasp
 
-`clasp` is used to connect the local source files with a Google Apps Script project.
-
-Conceptually:
+`clasp` connects the local source files with Google Apps Script.
 
 ```text
-Local src/
-    |
-    | clasp push
-    v
+Local project
+     |
+     | clasp push
+     v
 Google Apps Script
+```
 
+and:
+
+```text
 Google Apps Script
-    |
-    | clasp pull
-    v
-Local src/
+     |
+     | clasp pull
+     v
+Local project
 ```
 
 Git and clasp therefore have different responsibilities:
@@ -93,11 +95,13 @@ clasp
 Local project <----------> Google Apps Script
 ```
 
-## 5. Google Apps Script
+Files ignored by Git can still be synchronized with Apps Script through clasp.
 
-Google Apps Script contains the executable form-generation logic.
+This makes it possible to keep private deployment configuration outside the public repository while still using it in the real Apps Script project.
 
-The source code is organized into separate files according to responsibility.
+## 5. Google Apps Script source structure
+
+The public source code is organized by responsibility.
 
 ```text
 src/
@@ -111,56 +115,80 @@ src/
 
 ### `main.gs`
 
-Contains the main entry points used to run the project.
-
-Examples may include:
-
-- generating a form;
-- generating multiple language versions;
-- setting up spreadsheet integration.
+Contains public entry points that demonstrate how the reusable system is executed.
 
 ### `config.gs`
 
-Contains reusable form configuration structures and public example configuration.
+Contains fictional configuration used to demonstrate the public form structure.
 
-Real deployment-specific content must not be committed to the public repository.
+It does not contain real deployment-specific form content.
 
 ### `form-builder.gs`
 
-Contains the logic that converts form configuration into Google Forms items using `FormApp`.
+Contains the reusable logic that converts configuration objects into Google Forms.
 
-It is responsible for interpreting logical question types such as:
+Supported logical field types include:
 
 - short answer;
 - paragraph;
 - multiple choice;
 - checkboxes;
-- dates;
-- sections.
+- date fields;
+- form sections.
 
 ### `spreadsheet.gs`
 
-Contains spreadsheet-related logic.
+Contains reusable Google Sheets integration logic.
 
-Responsibilities may include:
+Its responsibilities include:
 
-- connecting Forms responses to Sheets;
-- adding calculated or derived values;
-- preparing response data for internal use.
+- creating response spreadsheets;
+- connecting Google Forms to Sheets;
+- supporting derived spreadsheet values.
 
 ### `utils.gs`
 
-Contains small reusable helper functions that do not belong to one specific module.
+Contains reusable helper functions that do not belong to one specific module.
 
 ### `appsscript.json`
 
-Google Apps Script project manifest.
+Contains the public Google Apps Script project manifest.
 
-It contains Apps Script configuration required by the platform.
+It does not contain deployment-specific Google resource IDs.
 
-## 6. Form generation flow
+## 6. Private local files
 
-The project follows a configuration-driven approach.
+The real deployment uses additional local files.
+
+```text
+src/private-config.gs
+src/private-main.gs
+.clasp.json
+```
+
+These files are excluded from Git using `.gitignore`.
+
+They may still be synchronized to the private Google Apps Script project through clasp.
+
+### `private-config.gs`
+
+Contains deployment-specific form configuration.
+
+Its contents are never committed to the public repository.
+
+### `private-main.gs`
+
+Contains entry points used only for the private deployment.
+
+### `.clasp.json`
+
+Associates the local directory with a specific Google Apps Script project.
+
+Because it contains deployment-specific information, it is not committed.
+
+## 7. Configuration-driven form generation
+
+The reusable architecture separates data from logic.
 
 ```text
 Form configuration
@@ -175,94 +203,93 @@ Form builder
 Google Form
 ```
 
-The builder contains the generation logic while the configuration describes what should be generated.
-
-This avoids duplicating the same `FormApp` logic for every language.
-
-## 7. Multilingual design
-
-A logical field can contain translations without changing its internal identity.
-
-Conceptually:
+For example, one logical field may have multiple translated labels:
 
 ```text
 Internal field
      |
-     +---- Spanish label
+     +---- Spanish translation
      |
-     +---- French label
+     +---- French translation
 ```
 
-Both language versions are generated from the same logical structure.
+The builder remains the same regardless of language.
 
-This reduces the risk that two language versions become structurally different.
+## 8. Form generation flow
 
-## 8. Response flow
-
-Once a generated Google Form is used:
+Conceptually:
 
 ```text
-User submits form
-        |
-        v
-Google Forms
-        |
-        v
-Google Sheets
-        |
-        v
-Optional derived values
+Configuration
+      |
+      v
+buildForm()
+      |
+      v
+FormApp
+      |
+      v
+Google Form
 ```
 
-Some information may be calculated in the spreadsheet instead of being entered manually by the user.
+The configuration describes what should be generated.
 
-## 9. Public vs private information
+The builder determines how Google Forms should generate it.
 
-The project uses a strict separation between reusable public code and private deployment information.
+This avoids duplicating form-generation code for each language.
+
+## 9. Spreadsheet integration
+
+Generated forms can be connected programmatically to Google Sheets.
+
+```text
+Google Form
+     |
+     | submission
+     v
+Google Sheets
+     |
+     v
+Derived / processed values
+```
+
+Values that can be calculated from existing responses do not need to be entered manually by users.
+
+This reduces redundant information and inconsistent input.
+
+## 10. Public and private boundaries
 
 ### Public repository
 
 May contain:
 
-- source code;
+- reusable source code;
 - technical documentation;
-- generic form-building logic;
+- generic configuration structures;
 - fictional examples;
 - setup instructions.
 
-### Private / local only
+### Private deployment
 
-Must contain any deployment-specific information such as:
+May contain:
 
+- real form content;
+- operational information;
 - Apps Script project IDs;
 - Google Form IDs;
 - Google Sheet IDs;
 - Google Drive IDs;
-- private form content;
-- operational event information;
-- credentials or tokens;
-- real user or response data.
+- credentials;
+- access tokens;
+- real responses;
+- personal or sensitive data.
 
-## 10. Local private files
-
-Private local configuration can be stored in files or directories ignored by Git.
-
-Example:
-
-```text
-private/
-.clasp.json
-.env
-```
-
-These paths are excluded using `.gitignore`.
-
-They must not be committed to the public repository.
+Private deployment information must never be committed to the public repository.
 
 ## 11. Repository structure
 
 ```text
-elim-Ycamp-form2027/
+multilingual-google-forms-automation/
 │
 ├── README.md
 ├── .gitignore
@@ -281,9 +308,7 @@ elim-Ycamp-form2027/
     └── utils.gs
 ```
 
-Additional files should only be added when they have a clear responsibility.
-
-The project should remain small and understandable.
+Private local files exist alongside this structure but are ignored by Git.
 
 ## 12. Design goals
 
@@ -293,7 +318,8 @@ The architecture aims to provide:
 - separation of responsibilities;
 - multilingual support;
 - reusable form-generation logic;
+- Google Workspace automation;
 - simple maintenance;
 - safe use of a public repository;
 - clear version history;
-- separation between source code and deployment-specific information.
+- separation between public code and private deployment information.
