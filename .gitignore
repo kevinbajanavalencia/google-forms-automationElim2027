@@ -1,6 +1,9 @@
 # Google Apps Script local config
 .clasp.json
 
+# Private Apps Script configuration
+src/private-config.gs
+
 # Environment / secrets
 .env
 .env.*
