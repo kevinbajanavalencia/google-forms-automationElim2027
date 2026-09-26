@@ -39,10 +39,24 @@ function addQuestionToForm_(form, question, language) {
       item = form.addTextItem();
       break;
 
+    case "PARAGRAPH":
+      item = form.addParagraphTextItem();
+      break;
+
     case "MULTIPLE_CHOICE":
       item = form
         .addMultipleChoiceItem()
         .setChoiceValues(question.options[language]);
+      break;
+
+    case "CHECKBOXES":
+      item = form
+        .addCheckboxItem()
+        .setChoiceValues(question.options[language]);
+      break;
+
+    case "DATE":
+      item = form.addDateItem();
       break;
 
     default:
