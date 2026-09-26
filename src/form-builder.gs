@@ -25,15 +25,8 @@ function rebuildForm(
 ) {
   validateLanguage_(config, language);
 
-  const items =
-    form.getItems();
-
-  for (
-    let index = items.length - 1;
-    index >= 0;
-    index--
-  ) {
-    form.deleteItem(index);
+  while (form.getItems().length > 0) {
+    form.deleteItem(0);
   }
 
   populateForm_(
@@ -205,7 +198,85 @@ function addQuestionToForm_(
     Boolean(question.required)
   );
 
+  applyQuestionValidation_(
+    item,
+    question,
+    language
+  );
+
   return item;
+}
+
+
+function applyQuestionValidation_(
+  item,
+  question,
+  language
+) {
+  if (!question.validation) {
+    return;
+  }
+
+  if (
+    question.type !==
+    "SHORT_ANSWER"
+  ) {
+    throw new Error(
+      `Text validation can only be used with SHORT_ANSWER questions: ${question.id}`
+    );
+  }
+
+  const validationConfig =
+    question.validation;
+
+  const validationBuilder =
+    FormApp.createTextValidation();
+
+  if (
+    validationConfig.helpText &&
+    validationConfig.helpText[
+      language
+    ]
+  ) {
+    validationBuilder.setHelpText(
+      validationConfig.helpText[
+        language
+      ]
+    );
+  }
+
+  switch (
+    validationConfig.type
+  ) {
+    case "EMAIL":
+      validationBuilder
+        .requireTextIsEmail();
+      break;
+
+    case "PATTERN":
+      if (
+        !validationConfig.pattern
+      ) {
+        throw new Error(
+          `Validation pattern missing for: ${question.id}`
+        );
+      }
+
+      validationBuilder
+        .requireTextMatchesPattern(
+          validationConfig.pattern
+        );
+      break;
+
+    default:
+      throw new Error(
+        `Unsupported validation type: ${validationConfig.type}`
+      );
+  }
+
+  item.setValidation(
+    validationBuilder.build()
+  );
 }
 
 
